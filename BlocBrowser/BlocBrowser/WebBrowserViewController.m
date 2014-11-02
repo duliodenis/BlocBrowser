@@ -7,11 +7,10 @@
 //
 
 #import "WebBrowserViewController.h"
-@import WebKit;
 
-@interface WebBrowserViewController ()
+@interface WebBrowserViewController () <UIWebViewDelegate>
 
-@property (nonatomic) WKWebView *webview;
+@property (nonatomic) UIWebView *webview;
 
 @end
 
@@ -20,12 +19,16 @@
 
 - (void)loadView {
     UIView *mainView = [UIView new];
-    self.webview = [[WKWebView alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
+    self.webview = [[UIWebView alloc] init];
+    self.webview.delegate = self;
     [mainView addSubview:self.webview];
     self.view = mainView;
 }
 
-- (void)viewDidLoad {
+- (void)viewWillLayoutSubviews {
+    [super viewWillLayoutSubviews];
+    self.webview.frame = self.view.frame;
+    
     NSURL *url = [NSURL URLWithString:@"http://ddApps.co"];
     NSURLRequest *request = [NSURLRequest requestWithURL:url];
     
