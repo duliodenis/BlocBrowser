@@ -15,6 +15,8 @@
 @property (nonatomic) UIButton *forwardButton;
 @property (nonatomic) UIButton *stopButton;
 @property (nonatomic) UIButton *reloadButton;
+@property (nonatomic, assign) NSUInteger frameCount;
+@property (nonatomic) UIActivityIndicatorView *activityIndicator;
 @end
 
 @implementation WebBrowserViewController
@@ -34,7 +36,7 @@
     self.textField.returnKeyType = UIReturnKeyDone;
     self.textField.autocapitalizationType = UITextAutocapitalizationTypeNone;
     self.textField.autocorrectionType = UITextAutocorrectionTypeNo;
-    self.textField.placeholder = NSLocalizedString(@"Website URL", @"Placeholder text for URL");
+    self.textField.placeholder = NSLocalizedString(@"Website URL or Search", @"Placeholder text for URL");
     self.textField.backgroundColor = [UIColor colorWithRed:0.746 green:0.863 blue:0.855 alpha:1.000];
     self.textField.delegate = self;
     
@@ -99,6 +101,9 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.edgesForExtendedLayout = UIRectEdgeNone;
+    
+    self.activityIndicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
+    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:self.activityIndicator];
 }
 
 
@@ -109,6 +114,12 @@
     
     NSString *urlString = textField.text;
     NSURL *url = [NSURL URLWithString:urlString];
+    
+    // if there are spaces use a search engine
+    if ([[urlString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]] length] > 0) {
+        NSString *searchQuery = [urlString stringByReplacingOccurrencesOfString:@" " withString:@"+"];
+        url = [NSURL URLWithString:[NSString stringWithFormat:@"http://www.google.com/search?q=%@",searchQuery]];
+    }
     
     if (!url.scheme) {
         url = [NSURL URLWithString:[NSString stringWithFormat:@"http://%@",urlString]];
@@ -126,12 +137,50 @@
 #pragma mark - UIWebView Delegate Methods
 
 - (void)webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error {
-    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:NSLocalizedString(@"Error", @"A communication error")
-                                                   message:[error localizedDescription]
-                                                  delegate:self
-                                         cancelButtonTitle:NSLocalizedString(@"OK", @"OK button") otherButtonTitles: nil];
-    [alert show];
+    if (error.code != -999) {
+        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:NSLocalizedString(@"Error", @"A communication error")
+                                                        message:[error localizedDescription]
+                                                       delegate:self
+                                              cancelButtonTitle:NSLocalizedString(@"OK", @"OK button") otherButtonTitles: nil];
+        [alert show];
+    }
+    [self updateButtonsAndTitles];
+    self.frameCount--;
 }
 
+
+- (void)webViewDidStartLoad:(UIWebView *)webView {
+    self.frameCount++;
+    [self updateButtonsAndTitles];
+}
+
+
+- (void)webViewDidFinishLoad:(UIWebView *)webView {
+    self.frameCount--;
+    [self updateButtonsAndTitles];
+}
+
+
+#pragma mark - Update UI Methods
+
+- (void)updateButtonsAndTitles {
+    NSString *webPageTitle = [self.webview stringByEvaluatingJavaScriptFromString:@"document.title"];
+    
+    if (webPageTitle) {
+        self.title = webPageTitle;
+    } else {
+        self.title = self.webview.request.URL.absoluteString;
+    }
+    self.backButton.enabled = self.webview.canGoBack;
+    self.forwardButton.enabled = self.webview.canGoForward;
+    self.stopButton.enabled = (self.frameCount > 0);
+    self.reloadButton.enabled = (self.frameCount == 0);
+    
+    if (self.frameCount > 0) {
+        [self.activityIndicator startAnimating];
+    } else {
+        [self.activityIndicator stopAnimating];
+    }
+}
 
 @end
