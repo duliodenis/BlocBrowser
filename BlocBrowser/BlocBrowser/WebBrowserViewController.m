@@ -44,22 +44,21 @@
     self.backButton = [UIButton buttonWithType:UIButtonTypeSystem];
     [self.backButton setEnabled:NO];
     [self.backButton setTitle:NSLocalizedString(@"Back", @"Back web navigation button") forState:UIControlStateNormal];
-    [self.backButton addTarget:self.webview action:@selector(goBack) forControlEvents:UIControlEventTouchUpInside];
     
     self.forwardButton = [UIButton buttonWithType:UIButtonTypeSystem];
     [self.forwardButton setEnabled:NO];
     [self.forwardButton setTitle:NSLocalizedString(@"Forward", @"Forward web navigation button") forState:UIControlStateNormal];
-    [self.forwardButton addTarget:self.webview action:@selector(goForward) forControlEvents:UIControlEventTouchUpInside];
     
     self.stopButton = [UIButton buttonWithType:UIButtonTypeSystem];
     [self.stopButton setEnabled:NO];
     [self.stopButton setTitle:NSLocalizedString(@"Stop", @"Stop web navigation button") forState:UIControlStateNormal];
-    [self.stopButton addTarget:self.webview action:@selector(stopLoading) forControlEvents:UIControlEventTouchUpInside];
     
     self.reloadButton = [UIButton buttonWithType:UIButtonTypeSystem];
     [self.reloadButton setEnabled:NO];
     [self.reloadButton setTitle:NSLocalizedString(@"Reload", @"Reload web navigation button") forState:UIControlStateNormal];
-    [self.reloadButton addTarget:self.webview action:@selector(reload) forControlEvents:UIControlEventTouchUpInside];
+
+    // Add Button Targets
+    [self addButtonTargets];
     
     // Add Subviews
     NSArray *arrayOfViews = @[self.webview, self.textField,self.backButton,self.forwardButton,self.stopButton,self.reloadButton];
@@ -116,7 +115,8 @@
     NSURL *url = [NSURL URLWithString:urlString];
     
     // if there are spaces use a search engine
-    if ([[urlString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]] length] > 0) {
+    NSUInteger spaces = [urlString componentsSeparatedByString:@" "].count;
+    if (spaces > 1) {
         NSString *searchQuery = [urlString stringByReplacingOccurrencesOfString:@" " withString:@"+"];
         url = [NSURL URLWithString:[NSString stringWithFormat:@"http://www.google.com/search?q=%@",searchQuery]];
     }
@@ -174,13 +174,45 @@
     self.backButton.enabled = self.webview.canGoBack;
     self.forwardButton.enabled = self.webview.canGoForward;
     self.stopButton.enabled = (self.frameCount > 0);
-    self.reloadButton.enabled = (self.frameCount == 0);
+    self.reloadButton.enabled = self.webview.request.URL && (self.frameCount == 0);
     
     if (self.frameCount > 0) {
         [self.activityIndicator startAnimating];
     } else {
         [self.activityIndicator stopAnimating];
     }
+}
+
+
+#pragma mark - Reset Browser View
+
+- (void)resetWebview {
+    [self.webview removeFromSuperview];
+    
+    UIWebView *newWebview = [[UIWebView alloc] init];
+    newWebview.delegate = self;
+    [self.view addSubview:newWebview];
+    
+    self.webview = newWebview;
+    
+    [self addButtonTargets];
+    
+    self.textField.text = nil;
+    [self updateButtonsAndTitles];
+}
+
+
+- (void)addButtonTargets {
+    NSArray *arrayOfButtons = @[self.backButton,self.forwardButton,self.stopButton,self.reloadButton];
+    
+    for (UIButton *button in arrayOfButtons) {
+        [button removeTarget:nil action:NULL forControlEvents:UIControlEventTouchUpInside];
+    }
+    
+    [self.backButton addTarget:self.webview action:@selector(goBack) forControlEvents:UIControlEventTouchUpInside];
+    [self.forwardButton addTarget:self.webview action:@selector(goForward) forControlEvents:UIControlEventTouchUpInside];
+    [self.stopButton addTarget:self.webview action:@selector(stopLoading) forControlEvents:UIControlEventTouchUpInside];
+    [self.reloadButton addTarget:self.webview action:@selector(reload) forControlEvents:UIControlEventTouchUpInside];
 }
 
 @end
