@@ -144,12 +144,16 @@
 
 
 - (void)pinchFired:(UIPinchGestureRecognizer *)recognizer {
-    if (recognizer.state == UIGestureRecognizerStateChanged) {
-        NSLog(@"Pinch recognized");
+    if (recognizer.state == UIGestureRecognizerStateEnded){
+        CGAffineTransform transform = CGAffineTransformScale([[recognizer view] transform], [recognizer scale], [recognizer scale]);
+        
+        if ([self.delegate respondsToSelector:@selector(floatingToolbar:didTryToZoomWithTransform:)]) {
+            [self.delegate floatingToolbar:self didTryToZoomWithTransform:transform];
+        }
     }
 }
 
-
+    
 - (void)resetLabels {
     self.currentLabel.alpha = 1.0f;
     self.currentLabel = nil;

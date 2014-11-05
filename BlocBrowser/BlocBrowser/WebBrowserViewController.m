@@ -208,8 +208,9 @@
 }
 
 
-- (void)floatingToolbar:(AwesomeFloatingToolbar *)toolbar didTryToZoomWithOffset:(CGPoint)offset {
+- (void)floatingToolbar:(AwesomeFloatingToolbar *)toolbar didTryToZoomWithTransform:(CGAffineTransform)transform {
     NSLog(@"Pinch and Zoom");
+    self.awesomeToolbar.frame = CGRectApplyAffineTransform(self.awesomeToolbar.frame, transform);
 }
 
 @end
