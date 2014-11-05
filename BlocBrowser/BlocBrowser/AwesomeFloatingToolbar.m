@@ -14,6 +14,9 @@
 @property(nonatomic) NSArray *colors;
 @property(nonatomic) NSArray *labels;
 @property(nonatomic, weak) UILabel *currentLabel;
+@property(nonatomic) UITapGestureRecognizer *tapGesture;
+@property(nonatomic) UIPanGestureRecognizer *panGesture;
+@property(nonatomic) UIPinchGestureRecognizer *pinchGesture;
 
 @end
 
@@ -56,6 +59,13 @@
         for (UILabel *thisLabel in self.labels) {
             [self addSubview:thisLabel];
         }
+        // Gesture Recognizers
+        self.tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tapFired:)];
+        [self addGestureRecognizer:self.tapGesture];
+        self.panGesture = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(panFired:)];
+        [self addGestureRecognizer:self.panGesture];
+        self.pinchGesture = [[UIPinchGestureRecognizer alloc] initWithTarget:self action:@selector(pinchFired:)];
+        [self addGestureRecognizer:self.pinchGesture];
     }
     return self;
 }
@@ -94,7 +104,7 @@
 }
 
 
-#pragma mark - Touch Handling Methods
+#pragma mark - Gesture Recognizer Methods
 
 - (UILabel *)labelFromTouches:(NSSet *)touches withEvent:(UIEvent *)event {
     UITouch *touch = [touches anyObject];
@@ -105,43 +115,38 @@
 }
 
 
-- (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {
-    UILabel *label = [self labelFromTouches:touches withEvent:event];
+- (void)tapFired:(UITapGestureRecognizer *)recognizer {
+    if (recognizer.state == UIGestureRecognizerStateRecognized) {
+        CGPoint location = [recognizer locationInView:self];
+        UIView *tappedView = [self hitTest:location withEvent:nil];
     
-    self.currentLabel = label;
-    self.currentLabel.alpha = 0.5f;
-}
-
-
-- (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event {
-    UILabel *label = [self labelFromTouches:touches withEvent:event];
-    
-    if (self.currentLabel != label) {
-        // label being touches is no longer the initial label
-        self.currentLabel.alpha = 1;
-    } else {
-        // the label being touched is the initial label
-        self.currentLabel.alpha = 0.5f;
-    }
-}
-
-
-- (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event {
-    UILabel *label = [self labelFromTouches:touches withEvent:event];
-    
-    if (self.currentLabel == label) {
-        NSLog(@"Label tapped: %@", self.currentLabel.text);
-        
-        if ([self.delegate respondsToSelector:@selector(floatingToolbar:didSelectButtonWithTitle:)]) {
-            [self.delegate floatingToolbar:self didSelectButtonWithTitle:self.currentLabel.text];
+        if ([self.labels containsObject:tappedView]) {
+            if ([self.delegate respondsToSelector:@selector(floatingToolbar:didSelectButtonWithTitle:)]) {
+                [self.delegate floatingToolbar:self didSelectButtonWithTitle:((UILabel *)tappedView).text];
+            }
         }
     }
-    [self resetLabels];
 }
 
 
-- (void)touchesCancelled:(NSSet *)touches withEvent:(UIEvent *)event {
-    [self resetLabels];
+- (void)panFired:(UIPanGestureRecognizer *)recognizer {
+    if (recognizer.state == UIGestureRecognizerStateChanged) {
+        CGPoint translation = [recognizer translationInView:self];
+        
+        NSLog(@"New translation: %@", NSStringFromCGPoint(translation));
+        
+        if ([self.delegate respondsToSelector:@selector(floatingToolbar:didTryToPanWithOffset:)]) {
+            [self.delegate floatingToolbar:self didTryToPanWithOffset:translation];
+        }
+    }
+    [recognizer setTranslation:CGPointZero inView:self];
+}
+
+
+- (void)pinchFired:(UIPinchGestureRecognizer *)recognizer {
+    if (recognizer.state == UIGestureRecognizerStateChanged) {
+        NSLog(@"Pinch recognized");
+    }
 }
 
 
