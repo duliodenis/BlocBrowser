@@ -144,11 +144,11 @@
 
 
 - (void)pinchFired:(UIPinchGestureRecognizer *)recognizer {
-    if (recognizer.state == UIGestureRecognizerStateEnded){
-        CGAffineTransform transform = CGAffineTransformScale([[recognizer view] transform], [recognizer scale], [recognizer scale]);
+    if (recognizer.state == UIGestureRecognizerStateChanged){
+        CGFloat scale = [recognizer scale];
         
-        if ([self.delegate respondsToSelector:@selector(floatingToolbar:didTryToZoomWithTransform:)]) {
-            [self.delegate floatingToolbar:self didTryToZoomWithTransform:transform];
+        if ([self.delegate respondsToSelector:@selector(floatingToolbar:didTryToZoomWithScale:)]) {
+            [self.delegate floatingToolbar:self didTryToZoomWithScale:scale];
         }
     }
 }

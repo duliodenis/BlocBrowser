@@ -208,9 +208,14 @@
 }
 
 
-- (void)floatingToolbar:(AwesomeFloatingToolbar *)toolbar didTryToZoomWithTransform:(CGAffineTransform)transform {
-    NSLog(@"Pinch and Zoom");
-    self.awesomeToolbar.frame = CGRectApplyAffineTransform(self.awesomeToolbar.frame, transform);
+- (void)floatingToolbar:(AwesomeFloatingToolbar *)toolbar didTryToZoomWithScale:(CGFloat)scale {
+    NSLog(@"Pinch and Zoom Scale = %f", scale);
+    CGRect potentialNewFrame = CGRectMake(toolbar.frame.origin.x, toolbar.frame.origin.y,
+                                          toolbar.frame.size.width * scale, toolbar.frame.size.height * scale);
+    
+    if (CGRectContainsRect(self.view.bounds, potentialNewFrame)) {
+        toolbar.frame = potentialNewFrame;
+    }
 }
 
 @end
