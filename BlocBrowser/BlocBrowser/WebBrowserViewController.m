@@ -73,8 +73,6 @@
     
     self.textField.frame = CGRectMake(0, 0, width, itemHeight);
     self.webview.frame = CGRectMake(0, CGRectGetMaxY(self.textField.frame), width, browserHeight);
-
-    self.awesomeToolbar.frame = CGRectMake(20, 200, 280, 60);
 }
 
 - (void)viewDidLoad {
@@ -83,6 +81,8 @@
     
     self.activityIndicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
     self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:self.activityIndicator];
+    // Move this to viewDidLoad so that it doesn't conflict with the Pinch Gesture.
+    self.awesomeToolbar.frame = CGRectMake(20, 200, 280, 60);
 }
 
 
